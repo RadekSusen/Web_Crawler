@@ -1,12 +1,17 @@
 package utb.fai;
 
-import java.net.URI;
-import java.util.HashSet;
-import java.util.LinkedList;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * Třída ParserCallback je používána parserem DocumentParser,
@@ -18,35 +23,12 @@ import javax.swing.text.html.HTMLEditorKit;
  * @author Tomá Dulík
  */
 class ParserCallback extends HTMLEditorKit.ParserCallback {
-
-    /**
-     * pageURI bude obsahovat URI aktuální parsované stránky. Budeme
-     * jej vyuívat pro resolving všech URL, které v kódu stránky najdeme
-     * - předtím, než nalezené URL uložíme do foundURLs, musíme z něj udělat
-     * absolutní URL!
-     */
-    URI pageURI;
-
-    /**
-     * depth bude obsahovat aktuální hloubku zanoření
-     */
-    int depth = 0, maxDepth = 5;
-
-    /**
-     * visitedURLs je množina všech URL, které jsme již navtívili
-     * (parsovali). Pokud najdeme na stránce URL, který je v této množině,
-     * nebudeme jej u dále parsovat
-     */
+    private final HashMap<String, Integer> wordCountMap = new HashMap<>();
+    private URI pageURI;
+    int Depth = 0;
+    int maxDepth = 5;
     HashSet<URI> visitedURIs;
-
-    /**
-     * foundURLs jsou všechna nová (zatím nenavštívená) URL, která na stránce
-     * najdeme. Poté, co projdeme celou stránku, budeme z tohoto seznamu
-     * jednotlivá URL brát a zpracovávat.
-     */
     LinkedList<URIinfo> foundURIs;
-
-    /** pokud debugLevel>1, budeme vypisovat debugovací hlášky na std. error */
     int debugLevel = 0;
 
     ParserCallback(HashSet<URI> visitedURIs, LinkedList<URIinfo> foundURIs) {
@@ -64,21 +46,25 @@ class ParserCallback extends HTMLEditorKit.ParserCallback {
     public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos) {
         URI uri;
         String href = null;
-        if (debugLevel > 1)
-            System.err.println("handleStartTag: " + t.toString() + ", pos=" + pos + ", attribs=" + a.toString());
-        if (depth <= maxDepth)
-            if (t == HTML.Tag.A)
+        if (debugLevel > 1){
+            System.err.println("handleStartTag: " + t + ", pos=" + pos + ", attribs=" + a);
+        }
+        if (depth <= maxDepth) {
+            if (t == HTML.Tag.A) {
                 href = (String) a.getAttribute(HTML.Attribute.HREF);
-            else if (t == HTML.Tag.FRAME)
+            } else if (t == HTML.Tag.FRAME) {
                 href = (String) a.getAttribute(HTML.Attribute.SRC);
+            }
+        }
         if (href != null)
             try {
                 uri = pageURI.resolve(href);
                 if (!uri.isOpaque() && !visitedURIs.contains(uri)) {
                     visitedURIs.add(uri);
                     foundURIs.add(new URIinfo(uri, depth + 1));
-                    if (debugLevel > 0)
+                    if (debugLevel > 0) {
                         System.err.println("Adding URI: " + uri.toString());
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("Nalezeno nekorektní URI: " + href);
@@ -99,10 +85,30 @@ class ParserCallback extends HTMLEditorKit.ParserCallback {
      * data typu Integer bude dosavadní počet výskytu daného slova v
      * HTML stránkách.
      *******************************************************************/
-    public void handleText(char[] data, int pos) {
-        System.out.println("handleText: " + String.valueOf(data) + ", pos=" + pos);
-        /**
-         * ...tady bude vaše implementace...
-         */
-    }
+    public void handleText(char[] data, int position) {
+
+        String[] words = Strting.valueOf(data).trim().split("\\s+");
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                word = word.toLowerCase();
+                wordCountMap.put(word, wordCountMap.getOrDefault(word, 0) + 1);
+            }
+        }
+        public List<Map.Entry<String, Integer>> getSortedWordCount() {
+            List<Map.Entry<String, Integer>> sortedWordCount = new ArrayList<>(wordCountMap.entrySet());
+            sortedWordCount.sort(o1, o2) ->o2.getValue().compareTo(o1.getValue()));
+            return sortedWordCount;
+        }
+
+        public void printWordCount(int count) {
+            List<Map.Entry<String, Integer>> sortedWordCount = getSortedWordCount();
+            for (int i =0; i<count && i < sortedWordCount.size(); i++) {
+                System.out.println(sortedWordCount.get().getKey() + ";" + sortedWordCount.get().getValue());
+            }
+        }
+        public Map<String, Integer> getWordFrequency() {
+            return wordCountMap;
+            }
+         }
 }
