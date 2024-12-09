@@ -22,20 +22,13 @@ public class App {
 	public static void main(String[] args) {
 		LinkedList<URIinfo> foundURIs = new LinkedList<URIinfo>();
 		HashSet<URI> visitedURIs = new HashSet<URI>();
-		List<Future<?>> futures = new ArrayList<URI>();
+		List<Future<?>> futures = new ArrayList<>();
 		URI uri;
 		try {
 			uri = new URI(args[0] + "/");
 			if (args.length < 1) {
 				System.err.println("Missing parameter - start URL");
 				return;
-			}
-			startingURI = new URI(args[0] + "/");
-			foundURIs.add(new URIinfo(startingURI, 0));
-			processedURIs.add(startingURI);
-
-			if (args.length >= 2) {
-				depthLimit = Integer.parseInt(args[1]);
 			}
 
 
