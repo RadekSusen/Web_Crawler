@@ -87,6 +87,26 @@ class ParserCallback extends HTMLEditorKit.ParserCallback {
 
     }
 
+    HashMap<String, Integer> idkMap = new HashMap<String, Integer>();
+
+    public void displaySortedWordFrequencies() {
+        // Convert idkMap na list
+        List<Map.Entry<String, Integer>> sortedList = new ArrayList<>(idkMap.entrySet());
+
+        // Sort 
+        sortedList.sort((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()));
+        int i = 0;
+        for (Map.Entry<String, Integer> entry : sortedList) {
+            System.err.println(entry.getKey() + ";" + entry.getValue());
+            if (i == 20) {
+                break;
+            } else {
+                i++;
+            }
+        }
+    }
+
+
     /******************************************************************
      * V metodě handleText bude probíhat veškerá činnost, související se
      * zjiováním četnosti slov v textovém obsahu HTML stránek.
@@ -104,5 +124,31 @@ class ParserCallback extends HTMLEditorKit.ParserCallback {
         /**
          * ...tady bude vaše implementace...
          */
+
+        // System.out.println("handleText: " + String.valueOf(data) + ", pos=" + pos);
+
+        String text = String.valueOf(data);
+
+        text = text.toLowerCase().replaceAll("[^a-z0-9 ]", " ");
+
+        String[] words = text.split("\\s+");
+
+        HashMap<String, Integer> wordCount = new HashMap<>();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
+            }
+        }
+
+        synchronized (idkMap) {
+            for (String word : wordCount.keySet()) {
+                idkMap.put(word, idkMap.getOrDefault(word, 0) + wordCount.get(word));
+            }
+        }
+
+        if (debugLevel > 0) {
+            System.err.println("Processed text block at pos=" + pos + ", found " + wordCount.size() + " unique words.");
+        }
     }
 }
