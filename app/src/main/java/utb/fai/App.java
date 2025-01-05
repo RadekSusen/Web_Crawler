@@ -47,6 +47,7 @@ public class App {
 					System.err.println("Error loading page - does it exist?");
 				}
 			}
+			callBack.displaySortedWordFrequencies();
 		} catch (Exception e) {
 			System.err.println("Zachycena neoetøená výjimka, konèíme...");
 			e.printStackTrace();
